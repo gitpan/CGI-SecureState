@@ -8,7 +8,7 @@ use Crypt::Blowfish;
 use Digest::SHA1 qw(sha1 sha1_hex sha1_base64);
 use vars qw(@ISA $VERSION $counter);
 @ISA=qw(CGI); 
-$VERSION = '0.23';
+$VERSION = '0.24';
 
 
 sub new 
@@ -41,7 +41,7 @@ sub new
 sub encipher
 {
     my ($self)=shift;
-    my ($binstring,@values,$value)=("");
+    my ($binstring,@values,$value,$tmp)=("");
     my ($statedir,$filename,$cipher,@savedpairs)=($self->{'.statedir'},$self->{'.objectfile'},$self->{'.cipher'},$self->param());
     return if ($self->param('.sailthru'));
     foreach (@savedpairs)  {
