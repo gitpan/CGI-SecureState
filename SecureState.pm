@@ -1,4 +1,6 @@
 #!/usr/bin/perl -wT
+#This file is Copyright (C) 2000-2003 Peter Behroozi and is
+#licensed for use under the same terms as Perl itself.
 package CGI::SecureState;
 
 use strict;
@@ -12,10 +14,10 @@ use vars qw(@ISA $VERSION $Counter $NASTY_WARNINGS $AVOID_SYMLINKS
 
 BEGIN {
 @ISA=qw(CGI);
-$VERSION = '0.35';
+$VERSION = '0.36';
 
 #Set this to 0 if you want warnings about deprecated behavior to be suppressed,
-#especially if you are upgrading from CGI::SecureState 0.2x.  However, heed the 
+#especially if you are upgrading from CGI::SecureState 0.2x.  However, heed the
 #warnings issued when this is set to 1 because they will better your coding style
 #and likely increase program security.
 $NASTY_WARNINGS = 1;
@@ -55,7 +57,7 @@ sub import {
 }
 
 
-sub new 
+sub new
 {
     #Obtain the class (should be CGI::SecureState in most cases)
     my $class = shift;
@@ -95,7 +97,7 @@ sub new
     #Set up short-term memory
     $args{'-temp'} ||= $args{'-shortTerm'} || $args{'-shortterm'} || [];
     $cgi->{'.recent_memory'} = {map {$_ => undef} @{$args{'-temp'}}};
-    
+
     #Check for ID tag in url if it is not in the normal parameters list
     if (!defined($cgi->param('.id')) && $cgi->request_method() eq 'POST') {
 	$cgi->param('.id', $cgi->url_param('.id'));
@@ -107,7 +109,7 @@ sub new
     my $remoteip = pack("CCCC", split (/\./, $remote_addr));
     my $key = pack("H*",$id) . $remoteip;
     $cgi->{'.cipher'} = new Crypt::Blowfish($key) || errormsg($cgi, 'invalid state file');
-    
+
     #set the directory where we will store saved information
     my $statedir = $args{'-stateDir'} || $args{'-statedir'} || ".";
 
@@ -116,7 +118,7 @@ sub new
     $statefile =~ tr|+/|_-|;
     $statefile =~ /([\w-]{27})/;
     $cgi->{'.statefile'} = File::Spec->catfile($statedir,$1);
-    
+
     #convert $cgi into a CGI::SecureState object
     bless $cgi, $class;
 
@@ -249,7 +251,7 @@ sub start_html {
 }
 
 
-sub clean_statedir 
+sub clean_statedir
 {
     my $self = shift;
     my %args = args_to_hash([qw(-age -directory)], @_);
@@ -327,12 +329,13 @@ sub args_to_hash {
 }
 
 
+
 sub stringify_recent_memory 
 {
     my ($self, $format) = @_;
     my $recent_memory = $self->{'.recent_memory'};
     my ($leading, $separating, $closing, $result);
-    
+
     if ($format eq 'url') {
 	$leading = $CGI::USE_PARAM_SEMICOLONS ? ';' : '&';
 	($separating, $closing) = ('=', '');
@@ -343,11 +346,11 @@ sub stringify_recent_memory
     foreach (keys %$recent_memory) {
 	next if ($_ eq '.id' or substr($_,0,4) eq '.tmp');
 	my $param = $_;
-	$param =~ s/([^0-9A-Za-z_.])/'%'.unpack('H*',$1)/geo if ($format eq 'url');  #Do URL-encoding
+	escape_url($param) if ($format eq 'url');  #Do URL-encoding
 	$param = $self->escapeHTML($param) if ($format eq 'form');
 	foreach (@{$recent_memory->{$param}}) {
 	    my $value = $_;
-	    $value =~ s/([^0-9A-Za-z_.])/'%'.unpack('H*',$1)/geo if ($format eq 'url');  #Do URL-encoding
+	    escape_url($value) if ($format eq 'url');  #Do URL-encoding
 	    $value = $self->escapeHTML($value) if ($format eq 'form');
 	    $result .= $leading . ".tmp$param" . $separating . $value . $closing;
 	}
@@ -366,7 +369,18 @@ sub recover_recent_memory {
     }
 }
 
-sub save_memory 
+
+#Workaround for Perl v5.005_03 so that Unicode is encrypted
+#and decrypted properly.
+BEGIN {
+my $subs = <<'END_OF_FUNCTIONS'
+
+#Derived from the escape funtion of CGI::Util
+sub escape_url {
+    $_[0]=~s/([^a-zA-Z0-9_.-])/sprintf("%%%02X",ord($1))/eg;
+}
+
+sub save_memory
 {
     my $self=shift;
     my (@data,@values,$entity);
@@ -382,12 +396,12 @@ sub save_memory
 	    push @data, join("  ",@values), $_;
 	}
     }
-    
+
     push @data, $isforgetful ? "Forgetful" :  "Remembering";
     $self->encipher(join("\n\n", @data, "Saved-Values"));
 }
 
-sub recover_memory 
+sub recover_memory
 {
     my $self=shift;
     my (@data,$param,@values, $value);
@@ -423,7 +437,7 @@ sub recover_memory
 #The encipher subroutine accepts a list of values to encrypt and writes them to
 #the state file.  If the list of values is empty, it merely updates the timestamp
 #of the state file.
-sub encipher 
+sub encipher
 {
     my ($self, $buffer) = @_;
     my ($cipher, $statefile) = @$self{'.cipher','.statefile'};
@@ -480,7 +494,7 @@ sub encipher
 }
 
 
-sub decipher 
+sub decipher
 {
     my $self = shift;
     my ($cipher,$statefile) = @$self{'.cipher','.statefile'};
@@ -508,7 +522,7 @@ sub decipher
 	$decoded=-8;
 
 	#sanity check
-	if ((stat(STATEFILE))[7] != ($length+$extra+8)) 
+	if ((stat(STATEFILE))[7] != ($length+$extra+8))
 	{ $self->errormsg('invalid state file') }
 
 	#read the rest of the file
@@ -533,6 +547,10 @@ sub decipher
     close(STATEFILE) || $self->errormsg('failed to close the state file');
 
     return($buffer);
+}
+END_OF_FUNCTIONS
+    ;
+eval(($]<5.006) ? $subs : "use bytes; $subs");
 }
 
 "True Value";
@@ -565,7 +583,7 @@ For those still using the 0.2x series, CGI::SecureState changed enormously betwe
 run your old scripts unchanged under CGI::SecureState 0.3x, you will receive nasty
 warnings (likely both in output web pages and your log files) that will tell you not
 to do so.  Please do yourself a favor by re-reading this documentation, as this
-mysterious mindset business (as well as all the scrumptious new features) will be 
+mysterious mindset business (as well as all the scrumptious new features) will be
 made clear.
 
 Of course, any and all comments on the changes are welcome.  If you are interested,
@@ -591,7 +609,7 @@ state file on the server.  CGI::SecureState is similar in purpose to CGI::Persis
 (and retains much of the same user interface) but has a completely different
 implementation.  For those of you who have worked with CGI::Persistent before,
 you will be pleased to learn that CGI::SecureState was designed to work with Perl's
-taint mode and has worked flawlessly with mod_perl and Apache::Registry for nearly
+taint mode and has worked flawlessly with mod_perl and Apache::Registry for over
 two years.  CGI::SecureState was also designed from the ground up for security, a
 fact which may rear its ugly head if anybody tries to do something tricksy.
 
@@ -601,7 +619,7 @@ fact which may rear its ugly head if anybody tries to do something tricksy.
 If you were curious about the mindset business mentioned earlier, this section
 is for you.  In the past, CGI::SecureState had only one behavior (which I like
 to call a mindset), which was to store all the CGI parameters that the client
-sent to it.  Besides bloating session files, this mindset encouraged all sorts of 
+sent to it.  Besides bloating session files, this mindset encouraged all sorts of
 insidious bugs where parameters saved by one script would lurk in the state file
 and cause problems for scripts down the line.
 
@@ -609,12 +627,12 @@ If you could tell CGI::SecureState exactly which parameters to save, then life
 would get much better.  This is exactly what the shiny new "forgetful" mindset
 does, as it will only store parameters that are I<in> its "memory".  The
 old behavior remains, slightly modified, in the form of the "unforgetful" mindset,
-which will cause CGI::SecureState to save (and recall) all parameters passed to 
+which will cause CGI::SecureState to save (and recall) all parameters passed to
 the script I<excepting> those that are in its "memory".
 
 You may wonder why "memory" is in quotes.  The answer is simple: you pass
 the "memory" to the CGI::SecureState object when it is initialized.  So, to
-have a script that remembers everything except the parameters "foo" and "bar", 
+have a script that remembers everything except the parameters "foo" and "bar",
 do
 
     my $cgi = new CGI::SecureState(-mindSet => 'unforgetful',
@@ -640,12 +658,12 @@ a mere
     my $cgi = new CGI::SecureState(-mindSet => 'forgetful');
     my ($user,$pass) = ($cgi->param('user'),$cgi->param('pass'));
 
-would suffice.  However, had you read the rest of the documentation, that last line 
+would suffice.  However, had you read the rest of the documentation, that last line
 could even have been
 
     my ($user,$pass) = $cgi->params('user','pass');
 
-Once you all see how more intuitive this new mindset is, I am sure that you 
+Once you all see how more intuitive this new mindset is, I am sure that you
 will make the switch, but, in the meantime, the "unforgetful" mindset remains.
 
 One more note about mindsets.  In order to retain compatibility with older
@@ -663,13 +681,14 @@ Most of you know that we as humans have two types of memory: short term
 and long term.  Short term memory is useful if you only need the information
 for a short while and can then forget it (as in studying before a final exam).
 Long term memory is useful for things that stick around, like knowing how to
-ride a bicycle.  
+ride a bicycle.
 
 There are also two types of persistent data that a CGI application needs to store.
-The first type covers data that is used a few times and then forgotten, such as 
-parameters passed to a search engine that displays its results over multiple pages.
-The second type covers data that is mostly static throughout the application, like
-a username and password.  Coincidence?  Perhaps.
+The first type covers data that is used a few times and then forgotten, such as
+parameters passed to a search engine that displays its results over multiple pages
+(known as page-state).  The second type covers data that is mostly static throughout
+the application, like a username and password (known as application-state).
+Coincidence?  Perhaps.
 
 Fortunately, CGI::SecureState now supports both.  For purely short term data,
 you can use the user_* functions to replace the ones you would normally use.
@@ -695,13 +714,14 @@ results and presses the "Next Page" link.   Since the state file would store onl
 the most recent search, the user recoils in horror as the "Next Page" is not filled
 with succulent almond pastries but instead white quasi-elliptical spheroids.
 Temporary memory does not have this problem, as it is not stored in the state file
-but tacked on as a special parameter list when you use the state_url() function.
-The only downside is, of course, that the temporary memory is not encrypted.  This
-may be fixed in a future release of CGI::SecureState, but for now you will have to
-restrict sensitive information to long term memory only.
+but tacked on as a special parameter list or a special sequence of hidden input fields
+when you use the memory_as() function.  The only downside is, of course, that the
+temporary memory is not encrypted.  This may be fixed in a future release of
+CGI::SecureState, but for now you will have to restrict sensitive information to
+long term memory only.
 
 
-=head1 METHODS 
+=head1 METHODS
 
 After that lecture on script design, I am sure that you are hungering to know how
 to actually use this module.  You will not be disappointed.  CGI::SecureState inherits
@@ -720,10 +740,10 @@ of course!), and takes four optional arguments:
 =item -mindSet
 
 If the mindset is not specified, then CGI::SecureState will spit out nasty warnings until you
-change your scripts or set $CGI::SecureState::NASTY_WARNINGS to 0. 
+change your scripts or set $CGI::SecureState::NASTY_WARNINGS to 0.
 
 The mindset may be specified in a few different ways, the most common being
-to spell out 'forgetful' or 'unforgetful'.  If it pleases you, you may also 
+to spell out 'forgetful' or 'unforgetful'.  If it pleases you, you may also
 use '1' to specify forgetfulness, and '0' to specify unforgetfulness.
 
 =item -memory
@@ -751,7 +771,7 @@ this argument.
 
 If you do not like the default error pages, then you may pass a reference to
 a subroutine that prints them out how you like them.  The subroutine should
-print out a complete web page and include the "Content-Type" header.  
+print out a complete web page and include the "Content-Type" header.
 The possible errors that can be caught by the subroutine are:
 
     failed to open the state file
@@ -781,8 +801,8 @@ Examples:
     $cgi = new CGI::SecureState(-mindSet => 0); #same thing
 
     #full listing
-    $cgi = new CGI::SecureState(-stateDir => $statedir, 
-				-mindSet => $mindset, 
+    $cgi = new CGI::SecureState(-stateDir => $statedir,
+				-mindSet => $mindset,
 				-memory => \@memory,
 				-shortTerm => \@temp_memory,
 				-errorSub => \&errorSub,
@@ -798,7 +818,7 @@ Examples:
 
     #if you prefer the straight argument style (note absence of
     #errorSub -- it is only supported with the new argument style)
-    $cgi = new CGI::SecureState($statedir, $mindset, \@memory, 
+    $cgi = new CGI::SecureState($statedir, $mindset, \@memory,
 				\@temp_memory, $key);
 
     #cause nasty warnings by not specifying the mindset
@@ -815,7 +835,7 @@ function to do that.
 
 =item B<state_param()>
 
-Returns a key-value pair that you can use to retain the session when linking 
+Returns a key-value pair that you can use to retain the session when linking
 to other scripts.  If, for example, you want the script "other.pl" to be able
 to see your current script's session, you would use
 
@@ -836,8 +856,8 @@ function to do that.
 
 This allows you to get a state url/parameter/field with the short term memory
 attached.  So, for example, if you wanted to retain short term memory between
-invocations of your script, you would write C<< $cgi->memory_as('url') >> instead of 
-C<< $cgi->state_url >>.  You can also write C<< $cgi->memory_as('param') >> and 
+invocations of your script, you would write C<< $cgi->memory_as('url') >> instead of
+C<< $cgi->state_url >>.  You can also write C<< $cgi->memory_as('param') >> and
 C<< $cgi->memory_as('field') >> instead of C<< $cgi->state_param >> and C<< $cgi->state_field >>.
 
 =item B<params()>
@@ -856,7 +876,7 @@ is equivalent to
 
 Allows you to get (and set) a parameter in short term memory.  If it cannot
 find the parameter you want to retrieve in short term memory, it will fall
-back to the normal param() call to get it for you.  Setting parameters via 
+back to the normal param() call to get it for you.  Setting parameters via
 this function will automatically add them to short term memory if they do
 not already exist.  The interface is exactly the same as that of the ordinary
 param() call, except you can set more than one parameter at a time by passing
@@ -873,8 +893,8 @@ of param() to fetch multiple values for you.
 
 This command adds a new parameter to the CGI object and stores it to disk.
 Use this command if you want something to be saved, since the param() method
-will only temporarily set a parameter.  add() uses the same syntax as param(), 
-but you may also add more than one parameter at once if the values are in a 
+will only temporarily set a parameter.  add() uses the same syntax as param(),
+but you may also add more than one parameter at once if the values are in a
 reference to an array:
 
     $cgi->add(param_a => ['value'], param_b => ['value1', 'value2']);
@@ -896,8 +916,8 @@ also want to set a new value for the parameter.
 
 =item B<delete()>
 
-delete() is an overridden method that deletes named attributes from the 
-query.  The state file on disk is updated to reflect the removal of 
+delete() is an overridden method that deletes named attributes from the
+query.  The state file on disk is updated to reflect the removal of
 the parameter.  Note that this has changed to accept a list of params to
 delete because otherwise the state file would be separately rewritten for
 each delete().
@@ -914,14 +934,14 @@ same syntax as the overridden delete().
 
 =item B<delete_all()>
 
-This command toasts all the current cgi parameters, but it merely clears 
+This command toasts all the current cgi parameters, but it merely clears
 the state file instead of deleting it.  For that, use delete_session() instead.
 
 
 =item B<delete_session()>
 
-This command not only deletes all the cgi parameters, but kills the 
-disk image of the session as well. This method should be used when you 
+This command not only deletes all the cgi parameters, but kills the
+disk image of the session as well. This method should be used when you
 want to irrevocably destroy a session.
 
 
@@ -1010,16 +1030,16 @@ To disable them, do
 
 There is now an official example of how to use CGI::SecureState in a large
 project.  If that is what you are looking for, check out the Anthill
-Bug Manager at Sourceforge (http://anthillbm.sourceforge.net/).
+Bug Manager at Sourceforge (L<http://anthillbm.sourceforge.net/>).
 
 
-This example is a simple log-in script.  It should have a directory called "states" 
+This example is a simple log-in script.  It should have a directory called "states"
 that it can write to.
 
   #!/usr/bin/perl -wT
   use CGI::SecureState qw(:paranoid_security);
 
-  my $cgi = new CGI::SecureState(-stateDir => 'states', 
+  my $cgi = new CGI::SecureState(-stateDir => 'states',
                                  -mindSet => 'forgetful');
 
   my ($user,$pass,$lo)=$cgi->params(qw(user pass logout));
@@ -1060,10 +1080,10 @@ entered.  It should have a directory called "states" that it can write to.
   #!/usr/bin/perl -wT
   use CGI::SecureState qw(:paranoid_security);
 
-  my $cgi = new CGI::SecureState(-stateDir => 'states', 
+  my $cgi = new CGI::SecureState(-stateDir => 'states',
                                 -mindSet => 'unforgetful');
-  print $cgi->header(); 
-  $cgi->start_html(-title => "CGI::SecureState test", 
+  print $cgi->header();
+  $cgi->start_html(-title => "CGI::SecureState test",
 		 -bgcolor => "white");
   print $cgi->start_form(-action => $cgi->url());
   print $cgi->state_field();
@@ -1079,8 +1099,8 @@ entered.  It should have a directory called "states" that it can write to.
   else {
       $cgi->add('num_inputs' => ($cgi->param('num_inputs')+1));
   }
-  $cgi->add('input'.$cgi->param('num_inputs') => 
-  	  $cgi->param('input')); 
+  $cgi->add('input'.$cgi->param('num_inputs') =>
+  	  $cgi->param('input'));
   $cgi->delete('input');
 
   foreach ($cgi->param()) {
@@ -1123,30 +1143,41 @@ Otherwise, it could take weeks . . .
 Crypt::Blowfish is the only cipher that CGI::SecureState is using
 at the moment.  Change at your own risk.
 
-CGI.pm has its own funky way of doing state persistence that 
-CGI::SecureState does NOT override.  This includes setting default
-values for form input fields.  If this becomes problematic,
+CGI.pm has a tendency to set default values for form input fields
+that CGI::SecureState does NOT override. If this becomes problematic,
 use the -override setting when calling things like hidden().
+
+Changes have been made so that saving/recovering Unicode now appears
+to work (with Perl 5.8.0).  This is still not guaranteed to work; if
+you have reports of problems or solutions, please let me know.
+
+As far as threading is concerned, CGI::SecureState (the actual module)
+is thread-safe as long as you provide it with an absolute path to the
+state file directory or if you do not change working directories in
+mid-stream.  This does not mean that it is necessarily safe to use
+CGI::SecureState in an application with threads, as thread-safety may
+be compromised by either Crypt::Blowfish or Digest::SHA1.  Check these
+modules to make sure that they are thread-safe before proceeding to
+use CGI::SecureState in an application with threads.
 
 Until I can do more tests, assume that there is precisely zero
 support for either threading or unicode.  If you would like to
 report your own results, send me a note and I will see what I
 can do about them.
 
-Many of the previous limitations of CGI::SecureState have been 
+Many previous limitations of CGI::SecureState have been
 removed in the 0.3x series.
 
 
 CGI::SecureState requires:
 
 
-Long file names (at least 27 chars): needed to ensure remote ticket 
+Long file names (at least 27 chars): needed to ensure session
 authenticity.
 
 
 Crypt::Blowfish: it couldn't be called "Secure" without.  At some point in
-the future (as better algorithms become available), this
-requirement may be changed.  Tested with versions 2.06, 2.09.
+the future, this requirement will be changed.  Tested with versions 2.06, 2.09.
 
 
 Digest::SHA1: for super-strong (160 bit) hashing of data.  It is used in
@@ -1164,15 +1195,15 @@ File::Spec: for concatenating directories and filenames in a portable way.
 Comes with Perl.  Tested with version 0.82.
 
 Perl: Hmmm.  Tested with stable releases from v5.005_03 to v5.8.0.
-There may be several bugs induced by lower versions of Perl, 
-which are not limited to the failure to compile, the failure to 
+There may be several bugs induced by lower versions of Perl,
+which are not limited to the failure to compile, the failure to
 behave properly, or the mysterious absence of your favorite pair of
 lemming slippers.  The author is exempt from wrongdoing and liability,
 especially if you decide to use CGI::SecureState with a version of Perl
 less than 5.005_03.
 
 
-=head1 SEE ALSO 
+=head1 SEE ALSO
 
   CGI(3), CGI::Persistent(3)
 

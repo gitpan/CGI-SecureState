@@ -1,6 +1,14 @@
 Revision history for Perl extension CGI::SecureState.
 
-0.35
+0.36
+	- Unicode support!
+	- New test for Unicode; requires Perl 5.8.0
+	- Updates to POD about Unicode and threading support.
+	- Minor updates to POD to fix mild inaccuracies.
+
+---Old Releases-----------------------------------------------
+
+0.35  Wednesday, January 1, 2003
 	- README update to explain Perl 5.005_03 compatibility.
 	- POD update to explain "recent memory" and to note that
 	  the Anthill Bug Manager is now the official large example
@@ -29,11 +37,10 @@ Revision history for Perl extension CGI::SecureState.
 	- Made new() check for ID tag in url_param (suggestion from
 	  Hise Chapman (hise at nc.rr.com).
 
----Old Releases-----------------------------------------------
 
 0.30  Sunday, June 23, 2002
 	- Updated the README to reflect changes.
-	- Updated the Makefile to spit out nasty warnings if 
+	- Updated the Makefile to spit out nasty warnings if
 	  the user was upgrading from a version below 0.29.
 	- Updated the Makefile to require Fcntl and File::Spec.
 	- Rewrote the POD to reflect changes.
@@ -70,7 +77,7 @@ Revision history for Perl extension CGI::SecureState.
 0.26  Tuesday, May 29, 2001
 	- Quick and dirty bugfix ($test variable not declared)
 
-0.25  Monday, May 28, 2001	
+0.25  Monday, May 28, 2001
 	- Changed e-mail address
 	- Fixed Makefile problems
 	- Added note about future versions of CGI::SecureState
@@ -101,7 +108,7 @@ Revision history for Perl extension CGI::SecureState.
 	- fixed POD to not include the blurb about rand() and time()
 	  and also add a blurb about age and the update to encipher
           and decipher.
-	- added age() method to return the time in days since the last 
+	- added age() method to return the time in days since the last
 	  access of the state file
 	- fixed encipher and decipher so that they now support binary
 	  keys and values.

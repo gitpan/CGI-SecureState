@@ -6,7 +6,7 @@ use File::Spec;
 BEGIN { $| = 1; print "1..1\n"; }
 
 $test=1;
-if (! open FILETEST, "looOoo_oooooo-123ngfiletESt" ) { &bail; }
+if (! open FILETEST, "looOoo_oooooo-123ngfiletESt" ) { bail() }
 elsif (File::Spec->case_tolerant())
 {
     warn "Your system does not differentiate between upper and lowercase\n";

@@ -9,3 +9,4 @@ t/Digest-SHA1.t
 t/Long-Filenames.t
 t/SecureState-Forgetful.t
 t/SecureState-Remembering.t
+t/Unicode.t

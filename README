@@ -1,5 +1,5 @@
-The source files in this distribution are 
-Copyright (C) 2000-2002 Peter Behroozi and are 
+The source files in this distribution are
+Copyright (C) 2000-2003 Peter Behroozi and are
 licensed for use under the same terms as Perl itself.
 
 CGI::SecureState
@@ -35,7 +35,7 @@ Crypt::Blowfish: it couldn't be called "Secure" without.  At some point in
 	requirement may be changed.  Tested with versions 2.06, 2.09.
 
 Digest::SHA1: for super-strong (160 bit) hashing of data.  It is used in
-	key generation and filename generation.  Tested with versions 1.03, 
+	key generation and filename generation.  Tested with versions 1.03,
         2.01.
 
 CGI: it couldn't be called "CGI" without.  Should not be a problem as it
@@ -48,7 +48,7 @@ File::Spec: for concatenating directories and filenames in a portable way.
 	Comes with Perl.
 
 Perl: Hmmm.  Tested with stable releases from v5.005_03 to v5.8.0.
-	There may be several bugs induced by lower versions of Perl, which 
+	There may be several bugs induced by lower versions of Perl, which
 	are not limited to the failure to compile, the failure to behave
 	properly, or the mysterious absence of your favorite pair of lemming
 	slippers.  The author is exempt from wrongdoing and liability,

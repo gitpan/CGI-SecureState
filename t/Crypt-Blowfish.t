@@ -25,4 +25,4 @@ my $binstring=$words;
 $binstring=~ s/(.{8})/$cipher->encrypt($1)/egs;
 $binstring=~ s/(.{8})/$cipher->decrypt($1)/egs;
 if ($binstring ne $words) { print "Bail out! Crypt::Blowfish, a required module for CGI::SecureState, does not work on your system!\n" }
-else { print "ok $test\n" } 
+else { print "ok $test\n" }
