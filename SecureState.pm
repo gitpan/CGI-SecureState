@@ -8,7 +8,7 @@ use Crypt::Blowfish;
 use Digest::SHA1 qw(sha1 sha1_hex sha1_base64);
 use vars qw(@ISA $VERSION $counter);
 @ISA=qw(CGI); 
-$VERSION = '0.25';
+$VERSION = '0.26';
 
 
 sub new 
@@ -52,7 +52,7 @@ sub encipher
 	}
     }
     $binstring=sprintf("%lx", length($binstring)) . " \n" . $binstring;
-    $tmp=(length($binstring) % 8)+1;
+    my $tmp=(length($binstring) % 8)+1;
     $binstring.= chr(int(rand(256))) while(--$tmp);
     $binstring=reverse($binstring);
     $binstring=~ s/(.{8})/$cipher->encrypt($1)/egs;
