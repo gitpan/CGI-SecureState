@@ -1,10 +1,14 @@
 The source files in this distribution are 
-Copyright (C) 2000-2001 Peter Behroozi and are 
+Copyright (C) 2000-2002 Peter Behroozi and are 
 licensed for use under the same terms as Perl itself.
 
-
-
 CGI::SecureState
+
+NOTE: If you are upgrading from the 0.2x series, you must read the documentation
+or risk fire, disaster, or sudden death from upper management as they cremate you
+when all your scripts have nasty warnings at the top.  Maybe they are a little more
+relaxed, but I highly doubt it.
+
 
 CGI::SecureState was written to resemble CGI::Persistent as closely as
 possible.  To install CGI::SecureState, all you should have to do is the
@@ -20,21 +24,27 @@ Then test the installation:
 
 and everything should work.
 
-
 This assumes that you have the following:
 Long file names (at least 27 chars): needed to ensure remote ticket
 	authenticity.
 
 Crypt::Blowfish: it couldn't be called "Secure" without.  At some point in
 	the future (as better algorithms become available), this
-	requirement may be changed.  Tested with version 2.06.
+	requirement may be changed.  Tested with versions 2.06, 2.09.
 
 Digest::SHA1: for super-strong (160 bit) hashing of data.  It is used in
-	key generation and filename generation.  Tested with version 1.03.
+	key generation and filename generation.  Tested with versions 1.03, 
+        2.01.
 
 CGI: it couldn't be called "CGI" without.  Should not be a problem as it
-	comes standard with Perl 5.004 and above.  Tested with version
-	2.56 and 2.74.
+	comes standard with Perl 5.004 and above.  Tested with versions
+	2.56, 2.74, 2.79.
+
+Fcntl:  for file flags that are portable (like LOCK_SH and SEEK_SET).  Comes
+	with Perl.  Tested with version 1.03.
+
+File::Spec: for concatenating directories and filenames in a portable way.
+	Comes with Perl.  Tested with version 0.82.
 
 Perl: Hmmm.  Tested with v5.6.[01].  This module has NOT been tested with
 	5.005 or below.  Use at your own risk.  There may be several bugs

@@ -4,4 +4,8 @@ Makefile.PL
 README
 SecureState.pm
 looOoo_oooooo-123ngfiletESt
-test.pl
+t/Crypt-Blowfish.t
+t/Digest-SHA1.t
+t/Long-Filenames.t
+t/SecureState-Forgetful.t
+t/SecureState-Remembering.t

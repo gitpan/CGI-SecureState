@@ -1,7 +1,43 @@
 Revision history for Perl extension CGI::SecureState.
 
-0.25
-	- Changed e-mail address
+0.30
+	- Updated the README to reflect changes.
+	- Updated the Makefile to spit out nasty warnings if 
+	  the user was upgrading from a version below 0.29.
+	- Updated the Makefile to require Fcntl and File::Spec.
+	- Rewrote the POD to reflect changes.
+	- Changed test script to use Test::Harness properly.
+	- Split test script into pieces with distinct functionalities.
+	- Changed the Long-Filenames.t script to use File::Spec to
+	  check for a distinction between upper and lowercase filenames.
+	- Added lots of portability changes, so CGI::SecureState
+	  should work on just about any system now.
+	- Added extra_ and paranoid_ security options.
+	- Added Symlink Detection support.
+	- Added flock support.
+	- Changed new() to make a mindset specification mandatory.
+	- Changed new() to accept the hash-style argument listing.
+	- Added mindsets.
+	- Changed errormsg() to be able to deal with more errors.
+	- Changed errormsg() to allow for a user error message
+          subroutine.
+	- Added remember() to save current parameters.
+	- Added params() to return more than one CGI parameter at a time
+	- Added state_param() to return a name-value pair so other
+          scripts can use the same session.
+	- Allowed add() to add more than one parameter at a time.
+	- Changed encipher() to be able to update the timestamp
+	  on the state file if not given anything to encrypt.
+	- Changed functionality of encipher() and decipher() to only
+	  do encryption and decryption, and added save_memory() and
+	  recover_memory() functions to actually interact with the
+	  list of parameters in the CGI object.
+	- Rewrite of encipher() and decipher() to use reverse-CBC
+	  encryption instead of ECB encryption.
+
+0.26    - Quick and dirty bugfix ($test variable not declared)
+
+0.25	- Changed e-mail address
 	- Fixed Makefile problems
 	- Added note about future versions of CGI::SecureState
 
@@ -11,7 +47,7 @@ Revision history for Perl extension CGI::SecureState.
 	- Added Dave Stafford's binmode fix.  Hopefully, the code will
 	  now work on Win32.
 	- changed delete() to accept multiple arguments
-	- fixed namespace instrusion
+	- fixed namespace intrusion
 	  (CGI::SecureState::Devel::counter->CGI::SecureState::counter)
 	- updated POD to reflect changes and fix misleading
 	  CGI::SecureState::errormsg section
@@ -43,5 +79,5 @@ Revision history for Perl extension CGI::SecureState.
           New versions (i.e. 2.74) of CGI.pm don't assume command line
 	  parameter entry.
 
-0.2  Mon Jan  2 17:10:30 2001
+0.20  Mon Jan  2 17:10:30 2001
 	- first public release.
