@@ -16,9 +16,14 @@ standard
 
 % perl Makefile.PL
 % make
+% make install
+
+Then test the installation:
+
 % make test
 
 and everything should work.
+
 
 This assumes that you have the following:
 Long file names (at least 27 chars): needed to ensure remote ticket
@@ -33,12 +38,12 @@ Digest::SHA1: for super-strong (160 bit) hashing of data.  It is used in
 
 CGI: it couldn't be called "CGI" without.  Should not be a problem as it
 	comes standard with Perl 5.004 and above.  Tested with version
-	2.56.
+	2.56 and 2.74.
 
 Perl: Hmmm.  Tested with v5.6.0.  This module has NOT been tested with
 	5.005 or below.  Use at your own risk.  There may be several bugs
-	induced by lower versions of Perl, several of which may
+	induced by lower versions of Perl, a few of which may
 	include: failure to compile, failure to run, or the mysterious
 	absence of your favorite pair of lemming slippers.  The author is
 	exempt from wrongdoing and liability in case you decide to use
-	CGI::SecureState with a Perl less than 5.6.0.
+	CGI::SecureState with a version of Perl less than 5.6.0.

@@ -1,9 +1,24 @@
 Revision history for Perl extension CGI::SecureState.
 
-0.21  Wed Jan  10 2:48:30 2001
+0.22  Thu Jan 18 17:47:45 2001
+	- fixed test.pl spelling error (should be installed)->(should
+	  not be installed) and changed it to test the new
+	  capabilities of the encipher and decipher functions.
+	- fixed POD to not include the blurb about rand() and time()
+	  and also add a blurb about age and the update to encipher
+          and decipher.
+	- added age() method to return the time in days since the last 
+	  access of the state file
+	- fixed encipher and decipher so that they now support binary
+	  keys and values.
+	- Changed README and POD to reflect that CGI::SecureState now
+	  works with CGI.pm v2.74.
+	- Changed test.pl to detect systems without case sensitivity.
+
+0.21  Wed Jan 10 14:48:30 2001
 	- fixed test.pl to work with newer versions of CGI.pm.
-          New versions of CGI.pm don't assume command line parameter 
-	  entry.
+          New versions (i.e. 2.74) of CGI.pm don't assume command line
+	  parameter entry.
 
 0.2  Mon Jan  2 17:10:30 2001
 	- first public release.

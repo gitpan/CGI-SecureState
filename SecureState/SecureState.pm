@@ -1,14 +1,14 @@
 #!/usr/bin/perl -wT
-use strict;
-no strict 'refs';
 package CGI::SecureState;
 
+use strict;
+no strict 'refs';
 use CGI;
 use Crypt::Blowfish;
 use Digest::SHA1 qw(sha1 sha1_hex sha1_base64);
 use vars qw(@ISA $VERSION);
 @ISA=qw(CGI); 
-$VERSION = '0.21';
+$VERSION = '0.22';
 
 
 sub new 
@@ -47,7 +47,8 @@ sub encipher
     foreach (@savedpairs)  {
 	if ($tmp=$self->param($_)){
 	    $tmp=~ s/(\W)/\\$1/go;
-	    $binstring.=join(" ",($_=~ m/(\w*)/),$tmp)." \n";
+	    s/(\W)/\\$1/go;
+	    $binstring.="$_  $tmp \n";
 	}
     }
     $binstring=sprintf("%lx", length($binstring)) . " \n" . $binstring;
@@ -75,9 +76,10 @@ sub decipher
     $binstring=substr($binstring,length()+2,hex()) || $self->errormsg('Invalid ID');
     foreach (split (" \n",$binstring))
     {
-	($spkey,$spvalue)=split (" ",$_,2);
+	($spkey,$spvalue)=split ("  ",$_,2);
 	if ($spvalue && ! defined ($self->param($spkey)))  {
 	    $spvalue=~ s/\\(\W)/$1/go;
+	    $spkey=~ s/\\(\W)/$1/go;
 	    $self->param(-name => $spkey, -value => $spvalue);
 	}
     }
@@ -110,6 +112,12 @@ sub delete_session
     my ($self)=shift;
     (unlink $self->{'.statedir'}."/".$self->{'.objectfile'}) or $self->errormsg('Filesystem Error');
     $self->SUPER::delete_all;
+}
+
+sub age
+{
+    my ($self)=shift;
+    return (-M $self->{'.statedir'}."/".$self->{'.objectfile'});
 }
 
 sub state_url
@@ -231,21 +239,27 @@ when you call new().
 
 Examples: 
 
- $q = new CGI::SecureState; 
- $q = new CGI::SecureState "states";
+ $cgi = new CGI::SecureState; 
+ $cgi = new CGI::SecureState "states";
  $rand= rand (); #or something from Math::TrulyRandom
- $q = new CGI::SecureState  undef, $rand;
+ $cgi = new CGI::SecureState  undef, $rand;
+
+
 
 =item B<state_url()>
 
 Returns a URL with the state identification string. This URL should be used
 for referring to the stateful session associated with the query.
 
+
+
 =item B<state_field()> 
 
 Returns a hidden INPUT type for inclusion in HTML forms. Like state_url(),
 this element is used in forms to refer to the stateful session associated
 with the query.
+
+
 
 =item B<state_url_thru()>
 
@@ -257,17 +271,23 @@ disk image will be ignored, even if you did not specifically call
 state_url_thru or state_field_thru.  This just might be fixed in the
 future.
 
+
+
 =item B<state_field_thru()>
 
 Like state_field in that it returns a hidden input field and like 
 state_url_thru in that the input field contains instructions to
 skip over the disk image of the stateful session.
 
+
+
 =item B<add()>
 
 This is a new one.  CGI->param will just temporarily set the parameters
 that you pass.  If you want stuff saved on disk (that can be overwritten
 by the user!) then use add() in the same way as param().
+
+
 
 =item B<delete()>
 
@@ -278,11 +298,15 @@ the parameter.
 Important note: Attributes that are NOT explicitly delete()ed will lurk
 about and come back to haunt you!
 
+
+
 =item B<delete_all()>
 
 This command toasts all the current cgi parameters, but unlike 
 CGI::Persistent, it merely clears the state file instead of deleting it.
 For that, use delete_session() instead.
+
+
 
 =item B<delete_session()>
 
@@ -290,7 +314,16 @@ This command not only deletes all the cgi parameters, but kills the
 disk image of the session as well. This method should be used when you 
 want to irrevocably destroy a session.
 
+
+
+=item B<age()>
+
+This is also a new one.  It returns the time in days that
+the session has lain inactive.
+
 =back
+
+
 
 =head1 EXAMPLE
 
@@ -328,8 +361,7 @@ entered.  It should have a directory called "states" that it can write to.
 
   foreach ($cgi->param())
   {
-      # .id is the name of the identifying key
-      print "\n<br>$_ -> ",$cgi->param($_) if ($_ ne '.id');
+      print "\n<br>$_ -> ",$cgi->param($_) if (/input/);
   }
   print $cgi->end_html;
 
@@ -340,20 +372,8 @@ following limitations, however.
 
 =head1 LIMITATIONS
 
-CGI parameters can not have spaces or binary data in their names.
-However, the values may be anything.  This is a data file format
-limitation and will be changed if enough people complain.
-
 See the statement about .sailthru in state_url_thru.  Again, if
 enough people complain, I will fix it.
-
-On UNIX systems, srand() depends on time() which has a granularity
-of one second.  Two people connecting from two different computers
-within the same second will get the same random seed unless you provide
-your own random data.  However, they will not use the same encryption
-or the same data file on disk.  This statement does not apply to
-users of Apache::Registry because they have the nice little feature that 
-global variables are preserved across sessions.
 
 Crypt::Blowfish is the only cipher that CGI::SecureState is using
 at the moment.  Change at your own risk.
@@ -363,29 +383,52 @@ CGI::SecureState does NOT override.  This include setting default
 values for form input fields.  If this becomes problematic,
 use the -override setting when calling things like hidden().
 
+You might not want to use the default error page.  If so, you
+may currently override it by declaring an "errormsg" routine
+of your own.  Just make sure you put a "package CGI::SecureState;"
+above your declaration.
+
+The limitation about CGI parameters not having can not have spaces 
+or binary data in their names has been removed.  However, the new
+version of CGI::SecureState is not format compatible with previous
+versions, so upgrade when you have no connections running.
+
+Thanks to Chris Bailiff for pointing out that rand and srand
+try to use /dev/[u]random for seeds if available.  Then the previous
+limitation about random numbers does not apply, although if you really
+want to seed the system with the full 160 bits instead of the 32/64 bits 
+that [s]rand seeds the system with, you still can.
+
 
 CGI::SecureState requires:
+
+
 Long file names (at least 27 chars): needed to ensure remote ticket 
 authenticity.
+
 
 Crypt::Blowfish: it couldn't be called "Secure" without.  At some point in
 the future (as better algorithms become available), this
 requirement may be changed.  Tested with version 2.06.
 
+
 Digest::SHA1: for super-strong (160 bit) hashing of data.  It is used in
 key generation and filename generation.  Tested with version 1.03.
 
+
 CGI.pm: it couldn't be called "CGI" without.  Should not be a problem as it
 comes standard with Perl 5.004 and above.  Tested with version
-2.56.
+2.56, 2.74.
+
 
 Perl: Hmmm.  Tested with v5.6.0.  This module has NOT been tested with
 5.005 or below.  Use at your own risk.  There may be several bugs
-induced by lower versions of Perl, several of which may
-include: failure to compile, failure to run, or the mysterious
-absence of your favorite pair of lemming slippers.  The author is
+induced by lower versions of Perl, which are not limited to the failure 
+to compile, the failure to behave properly, or the mysterious absence
+of your favorite pair of lemming slippers.  The author is
 exempt from wrongdoing and liability in case you decide to use
 CGI::SecureState with a Perl less than 5.6.0.
+
 
 
 It would be really nice if someone would audit the key generation,
@@ -416,12 +459,13 @@ Otherwise, it could take weeks . . .
 Peter Behroozi, behroozi@penguinpowered.com
 
 
-I ripped a good deal of documentation from CGI::Persistent, so
+I ripped a good deal of the initial documentation from CGI::Persistent, so
+even though I greatly changed most of it,
 
 Vipul Ved Prakash, mail@vipul.net
 
 deserves credit as well.
-Don't mail him with bugs or he might search me out and steal my
-set of perfumed mousepads.
+Bugs sent to him will probably get forwarded to 
+/dev/more_reasons_to_impale_peter_with_a_tree_trunk.
 
 =cut

@@ -50,11 +50,23 @@ else { print "ok 3\n" }
 
 $test=4;
 print "Testing long filenames ... ";
-unless ( open FILETEST, "looOoo_oooooo-123ngfiletESt" ) { &fail("not ok 4\n") }
+if (! open FILETEST, "looOoo_oooooo-123ngfiletESt" ) { &fail("not ok 4\n") }
+elsif ( open FILETEST, "looOOo_oooooo-123ngfiletESt" ) 
+{
+    print "possible error\n";
+    print "Your system does not differentiate between upper and lowercase\n";
+    print "filenames.  This severely limits the number of unique 27 character\n";
+    print "filenames from 2^162 to 2^141.  Are you sure that you want to continue?\n";
+    unless (<STDIN>=~/^y(?:es)?\n$/i)
+    {
+	print " not ok 4\n";
+	exit 0;
+    }
+}
 else { close FILETEST; print "ok 4\n"; }
 
 $test=5;
-print "\nAt the cgi text prompt, type in \"cgi=test%20%0A%07\" press return,\n";
+print "\nAt the cgi text prompt, type in \"%0Acgi=test%20%0A%07\" press return,\n";
 print "and type your system's end of file indicator (Ctrl-D on UNIX).  Note \n";
 print "that for this to work, the test program must be in a directory that it\n";
 print "can write in.\n";
@@ -63,7 +75,7 @@ use CGI qw( -debug );
 my $cgi=new CGI::SecureState(".");
 
 print "\nTesting CGI::SecureState ... ";
-if ($cgi->param('cgi') ne pack ("C*",116,101,115,116,32,10,7)) { &fail("not ok 5\n")}
+if ($cgi->param(chr(10)."cgi") ne ("test".pack ("C*",32,10,7))) { &fail("not ok 5\n")}
 else { print "ok 5\n" }
 
 
@@ -73,11 +85,11 @@ $cgi->add('random_stuff' => 'Some\[]/cv;l,".'.chr(244).chr(2).'bxpo wierdness');
 if ($cgi->param('random_stuff') ne 'Some\[]/cv;l,".'.chr(244).chr(2).'bxpo wierdness') { &fail("not ok 6\n") }
 else { print "ok 6\n" }
 
-$cgi->SUPER::delete('cgi');
+$cgi->SUPER::delete("\ncgi");
 $cgi->SUPER::delete('random_stuff');
 $cgi->decipher;
 print "Testing reading from the saved data ... ";
-if ($cgi->param('cgi') ne pack ("C*",116,101,115,116,32,10,7)) { &fail("not ok 7\n")}
+if ($cgi->param("\ncgi") ne pack ("C*",116,101,115,116,32,10,7)) { &fail("not ok 7\n")}
 elsif ($cgi->param('random_stuff') ne 'Some\[]/cv;l,".'.chr(244).chr(2).'bxpo wierdness') { &fail("not ok 7\n")}
 else { print "ok 7\n" }
 
@@ -88,7 +100,7 @@ print "unless you see errors, ok 8\n";
 
 print "All done.\n";
 print "If you see ANY wierd error messages, that is an indication of \n";
-print "failure, and CGI::SecureState should be installed.\n";
+print "failure, and CGI::SecureState should not be installed.\n";
 
 
 
