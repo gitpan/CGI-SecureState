@@ -2,10 +2,6 @@ The source files in this distribution are
 Copyright (C) 2000-2001 Peter Behroozi and are 
 licensed for use under the same terms as Perl itself.
 
-The GNU Public License is available with Perl.  As of this current time,
-it is not included in this distribution (shame on me!), so see www.gnu.org
-for more details.
-
 
 
 CGI::SecureState
@@ -40,7 +36,7 @@ CGI: it couldn't be called "CGI" without.  Should not be a problem as it
 	comes standard with Perl 5.004 and above.  Tested with version
 	2.56 and 2.74.
 
-Perl: Hmmm.  Tested with v5.6.0.  This module has NOT been tested with
+Perl: Hmmm.  Tested with v5.6.[01].  This module has NOT been tested with
 	5.005 or below.  Use at your own risk.  There may be several bugs
 	induced by lower versions of Perl, a few of which may
 	include: failure to compile, failure to run, or the mysterious

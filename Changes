@@ -1,7 +1,11 @@
 Revision history for Perl extension CGI::SecureState.
 
-0.24  Mon Mar 26 14:50:30 2001
-	- Fixed silly error ($tmp).
+0.25
+	- Changed e-mail address
+	- Fixed Makefile problems
+	- Added note about future versions of CGI::SecureState
+
+0.24    - Quick and dirty bugfix ($test variable not declared)
 
 0.23  Thu Mar 22 20:47:40 2001
 	- Added Dave Stafford's binmode fix.  Hopefully, the code will

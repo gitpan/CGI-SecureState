@@ -8,7 +8,7 @@ use Crypt::Blowfish;
 use Digest::SHA1 qw(sha1 sha1_hex sha1_base64);
 use vars qw(@ISA $VERSION $counter);
 @ISA=qw(CGI); 
-$VERSION = '0.24';
+$VERSION = '0.25';
 
 
 sub new 
@@ -41,7 +41,7 @@ sub new
 sub encipher
 {
     my ($self)=shift;
-    my ($binstring,@values,$value,$tmp)=("");
+    my ($binstring,@values,$value)=("");
     my ($statedir,$filename,$cipher,@savedpairs)=($self->{'.statedir'},$self->{'.objectfile'},$self->{'.cipher'},$self->param());
     return if ($self->param('.sailthru'));
     foreach (@savedpairs)  {
@@ -182,6 +182,23 @@ CGI::SecureState -- Transparent, secure statefulness for CGI programs
     print $cgi->header(); 
     my $url = $cgi->state_url(); 
     print "<a href=$url>I am a stateful CGI session.</a>"; 
+
+
+=head2 Important Note
+
+For current users who would otherwise skip reading the rest of the file, this
+is the B<last> version of CGI::SecureState in the .2x range.  When finished, the .3
+release will contain support for selective storing of parameters.
+For example:
+
+    my $cgi = new CGI::SecureState(-mindSet => 'forgetful');  #make the query forgetful
+    $cgi->remember qw(cheese pancakes bottlebrush blowtorch); #tell the query to remember
+                                                              #the quoted parameters
+
+For new users, disregard the above example and read the rest of the documentation.
+Any and all comments on the changes above are welcome.  If you are interested, send
+mail to behroozi@www.pls.uni.edu with the subject "CGI::SecureState Comment"
+
 
 =head1 DESCRIPTION
 
@@ -376,10 +393,10 @@ There are B<no known bugs> with the current version.  However, take note
 of the limitations section.
 
 If you do find a bug, you should send it immediately to
-behroozi@penguinpowered.com with the subject "CGI::SecureState Bug!".
-I am not responsible for problems in other peoples' code and will tell you
-so if you insist on sending me faulty code.  It is
-ok if you send me a bug report, it is better if you send a small
+behroozi@www.pls.uni.edu with the subject "CGI::SecureState Bug".
+I am I<not responsible> for problems in your code, so make sure
+that an example actually works before sending it.  It is merely acceptable
+if you send me a bug report, it is better if you send a small
 chunk of code that points it out, and it is best if you send a patch--if
 the patch is good, you might see a release the next day on CPAN.
 Otherwise, it could take weeks . . .
@@ -463,7 +480,7 @@ comes standard with Perl 5.004 and above.  Tested with versions
 2.56, 2.74.
 
 
-Perl: Hmmm.  Tested with v5.6.0.  This module has NOT been tested with
+Perl: Hmmm.  Tested with v5.6.[01].  This module has NOT been tested with
 5.005 or below.  Use at your own risk.  There may be several bugs
 induced by lower versions of Perl, which are not limited to the failure 
 to compile, the failure to behave properly, or the mysterious absence
@@ -478,8 +495,7 @@ CGI::SecureState with a Perl less than 5.6.0.
 
 =head1 AUTHORS
 
-Peter Behroozi, behroozi@penguinpowered.com
-
+Peter Behroozi, behroozi@www.pls.uni.edu
 
 I ripped a good deal of the initial documentation from CGI::Persistent, so
 even though I have greatly changed most of it,
