@@ -6,9 +6,9 @@ no strict 'refs';
 use CGI;
 use Crypt::Blowfish;
 use Digest::SHA1 qw(sha1 sha1_hex sha1_base64);
-use vars qw(@ISA $VERSION);
+use vars qw(@ISA $VERSION $counter);
 @ISA=qw(CGI); 
-$VERSION = '0.22';
+$VERSION = '0.23';
 
 
 sub new 
@@ -23,7 +23,7 @@ sub new
     $cgi->delete('.cipher');
     $cgi->{'.statedir'}=shift || ".";
 
-    my $id=$cgi->param('.id')|| &sha1_hex(shift or (time()^rand()).($CGI::SecureState::Devel::counter+=rand()));
+    my $id=$cgi->param('.id')|| &sha1_hex(shift or (time()^rand()).($CGI::SecureState::counter+=rand()));
     my $remote_addr=$ENV{'REMOTE_ADDR'};
     my $remoteip=pack("CCCC", split (".", $remote_addr));
     my $key=pack("H*",$id).&sha1($remoteip);
@@ -41,14 +41,14 @@ sub new
 sub encipher
 {
     my ($self)=shift;
-    my ($binstring,$tmp)=("");
+    my ($binstring,@values,$value)=("");
     my ($statedir,$filename,$cipher,@savedpairs)=($self->{'.statedir'},$self->{'.objectfile'},$self->{'.cipher'},$self->param());
     return if ($self->param('.sailthru'));
     foreach (@savedpairs)  {
-	if ($tmp=$self->param($_)){
-	    $tmp=~ s/(\W)/\\$1/go;
-	    s/(\W)/\\$1/go;
-	    $binstring.="$_  $tmp \n";
+	if (@values=$self->param($_)){
+	    foreach $value (@values) { $value =~ s/([\ \n\\])/\\$1/go }
+	    s/([\ \n\\])/\\$1/go;
+	    $binstring.="$_  ".join("  ",@values)." \n";
 	}
     }
     $binstring=sprintf("%lx", length($binstring)) . " \n" . $binstring;
@@ -57,6 +57,7 @@ sub encipher
     $binstring=reverse($binstring);
     $binstring=~ s/(.{8})/$cipher->encrypt($1)/egs;
     open (OBJFILE , "> $statedir/$filename") || $self->errormsg('Filesystem Error');
+    binmode OBJFILE;
     print OBJFILE $binstring;
     close OBJFILE or $self->errormsg('Filesystem Error');
 }
@@ -64,10 +65,11 @@ sub encipher
 sub decipher
 {
     my ($self)=shift;
-    my ($binstring,$spkey,$spvalue)=("");
+    my ($binstring,$spkey,@spvalues,$spvalue)=("");
     my ($statedir,$filename,$cipher)=($self->{'.statedir'},$self->{'.objectfile'},$self->{'.cipher'});
     return if ($self->param('.sailthru'));
     open (OBJFILE , "$statedir/$filename") || $self->errormsg ('Invalid ID');
+    binmode OBJFILE;
     $binstring.=$_ while (<OBJFILE>);
     close OBJFILE or $self->errormsg('Filesystem Error');
     $binstring=~ s/(.{8})/$cipher->decrypt($1)/egs;
@@ -76,11 +78,11 @@ sub decipher
     $binstring=substr($binstring,length()+2,hex()) || $self->errormsg('Invalid ID');
     foreach (split (" \n",$binstring))
     {
-	($spkey,$spvalue)=split ("  ",$_,2);
-	if ($spvalue && ! defined ($self->param($spkey)))  {
-	    $spvalue=~ s/\\(\W)/$1/go;
-	    $spkey=~ s/\\(\W)/$1/go;
-	    $self->param(-name => $spkey, -value => $spvalue);
+	($spkey,@spvalues)=split ("  ",$_);
+	if (@spvalues && ! defined ($self->param($spkey)))  {
+	    foreach $spvalue (@spvalues) {$spvalue=~ s/\\([\ \n\\])/$1/go }
+	    $spkey=~ s/\\([\ \n\\])/$1/go;
+	    $self->param($spkey, @spvalues);
 	}
     }
 }
@@ -95,7 +97,7 @@ sub add
 sub delete
 {
     my ($self)=shift;
-    $self->SUPER::delete(shift);
+    $self->SUPER::delete(shift) while (@_);
     $self->encipher;
 }
 
@@ -283,17 +285,20 @@ skip over the disk image of the stateful session.
 
 =item B<add()>
 
-This is a new one.  CGI->param will just temporarily set the parameters
-that you pass.  If you want stuff saved on disk (that can be overwritten
-by the user!) then use add() in the same way as param().
+This is a new one.  param() will just temporarily set the parameters
+that you pass (until you call add()).  If you want stuff saved on disk
+(that can be overwritten by the user!) then use add() in the same way as
+param().
 
 
 
 =item B<delete()>
 
-delete() is an overridden method that deletes a named attribute from the 
+delete() is an overridden method that deletes named attributes from the 
 query.  The state file on disk is updated to reflect the removal of 
-the parameter.
+the parameter.  Note that this has changed to accept a list of params to
+delete because otherwise the state file would be seperately rewritten for
+each delete().
 
 Important note: Attributes that are NOT explicitly delete()ed will lurk
 about and come back to haunt you!
@@ -367,8 +372,19 @@ entered.  It should have a directory called "states" that it can write to.
 
 =head1 BUGS
 
-There are B<no known bugs> with the current version.  Take note of the
-following limitations, however.
+There are B<no known bugs> with the current version.  However, take note
+of the limitations section.
+
+If you do find a bug, you should send it immediately to
+behroozi@penguinpowered.com with the subject "CGI::SecureState Bug!".
+I am not responsible for problems in other peoples' code and will tell you
+so if you insist on sending me faulty code.  It is
+ok if you send me a bug report, it is better if you send a small
+chunk of code that points it out, and it is best if you send a patch--if
+the patch is good, you might see a release the next day on CPAN.
+Otherwise, it could take weeks . . .
+
+
 
 =head1 LIMITATIONS
 
@@ -379,19 +395,45 @@ Crypt::Blowfish is the only cipher that CGI::SecureState is using
 at the moment.  Change at your own risk.
 
 CGI.pm has its own funky way of doing state persistence that 
-CGI::SecureState does NOT override.  This include setting default
+CGI::SecureState does NOT override.  This includes setting default
 values for form input fields.  If this becomes problematic,
 use the -override setting when calling things like hidden().
 
-You might not want to use the default error page.  If so, you
-may currently override it by declaring an "errormsg" routine
-of your own.  Just make sure you put a "package CGI::SecureState;"
-above your declaration.
+You might not want to use the default error pages.
+The easiest way to override them is:
 
-The limitation about CGI parameters not having can not have spaces 
-or binary data in their names has been removed.  However, the new
-version of CGI::SecureState is not format compatible with previous
-versions, so upgrade when you have no connections running.
+  use CGI::SecureState;
+  undef *CGI::SecureState::errormsg;
+  *CGI::SecureState::errormsg = \&mysub;
+
+  #program code ...
+
+  sub mysub
+  {
+     my ($self,$error)=@_;
+     print "Content-type: text/plain\n\n";
+
+     #note: error can currently be 'Invalid ID'
+     #or 'Filesystem Error'
+     if ($error eq 'Invalid ID')
+        { print "Blah." }
+     elsif ($error eq 'Filesystem Error')
+        { print "Blah Blah." }
+     exit 0;
+  }
+
+
+
+The limitation about CGI parameters not being able to have spaces 
+or binary data in their names has been removed.  In addition, CGI parameters may now
+take multiple values, as in a multiple-select list.  However,
+versions of CGI::SecureState greater than 0.22 are not format
+compatible with previous versions, so upgrade when you have no connections
+running.
+
+Thanks to Dave Stafford for pointing out the binmode change so the
+code could work on Win32.  I really didn't think that it would be that
+simple, but one never knows.
 
 Thanks to Chris Bailiff for pointing out that rand and srand
 try to use /dev/[u]random for seeds if available.  Then the previous
@@ -417,7 +459,7 @@ key generation and filename generation.  Tested with version 1.03.
 
 
 CGI.pm: it couldn't be called "CGI" without.  Should not be a problem as it
-comes standard with Perl 5.004 and above.  Tested with version
+comes standard with Perl 5.004 and above.  Tested with versions
 2.56, 2.74.
 
 
@@ -430,26 +472,6 @@ exempt from wrongdoing and liability in case you decide to use
 CGI::SecureState with a Perl less than 5.6.0.
 
 
-
-It would be really nice if someone would audit the key generation,
-enciphering, and deciphering subroutines to make sure that as little
-as possible information is given to an attacker about the nature of
-the contents.  As of right now, I am the only person who has looked at it.  
-I think that the 24-byte (192 bit) encryption is more than enough to counter 
-cryptanalysis, but one can never be too sure.  If nothing else, it
-would at least make sure that I am using Crypt::Blowfish properly
-and not dumping the encryption level down to 8 bytes (64 bits).
-
-
-If you do find a bug, you should send it immediately to
-behroozi@penguinpowered.com with the subject "CGI::SecureState Bug!".
-I am not responsible for problems in other people's code and will
-bluntly tell you so if you insist on sending me faulty code.  It is
-ok if you send me a bug report, it is better if you send a small
-chunk of code that points it out, and it is best if you send a patch--if
-the patch is good, you might see a release the next day on CPAN.
-Otherwise, it could take weeks . . .
-
 =head1 SEE ALSO 
 
   CGI(3), CGI::Persistent(3)
@@ -460,7 +482,7 @@ Peter Behroozi, behroozi@penguinpowered.com
 
 
 I ripped a good deal of the initial documentation from CGI::Persistent, so
-even though I greatly changed most of it,
+even though I have greatly changed most of it,
 
 Vipul Ved Prakash, mail@vipul.net
 

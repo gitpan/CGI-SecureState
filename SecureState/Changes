@@ -1,5 +1,21 @@
 Revision history for Perl extension CGI::SecureState.
 
+0.23  Thu Mar 22 20:47:40 2001
+	- Added Dave Stafford's binmode fix.  Hopefully, the code will
+	  now work on Win32.
+	- changed delete() to accept multiple arguments
+	- fixed namespace instrusion
+	  (CGI::SecureState::Devel::counter->CGI::SecureState::counter)
+	- updated POD to reflect changes and fix misleading
+	  CGI::SecureState::errormsg section
+	- changed encipher() and decipher() to allow for single parameters
+	  having more than one value
+	- changed encipher() and decipher() to escape fewer characters,
+	  resulting in smaller state files.
+	- changed POD to reflect that I have tested the encryption and
+	  decryption and am satisfied that it works.
+
+
 0.22  Thu Jan 18 17:47:45 2001
 	- fixed test.pl spelling error (should be installed)->(should
 	  not be installed) and changed it to test the new
@@ -22,4 +38,3 @@ Revision history for Perl extension CGI::SecureState.
 
 0.2  Mon Jan  2 17:10:30 2001
 	- first public release.
-
