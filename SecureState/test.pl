@@ -59,6 +59,7 @@ print "and type your system's end of file indicator (Ctrl-D on UNIX).  Note \n";
 print "that for this to work, the test program must be in a directory that it\n";
 print "can write in.\n";
 
+use CGI qw( -debug );
 my $cgi=new CGI::SecureState(".");
 
 print "\nTesting CGI::SecureState ... ";

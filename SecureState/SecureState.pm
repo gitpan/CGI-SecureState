@@ -8,7 +8,7 @@ use Crypt::Blowfish;
 use Digest::SHA1 qw(sha1 sha1_hex sha1_base64);
 use vars qw(@ISA $VERSION);
 @ISA=qw(CGI); 
-$VERSION = '0.2';
+$VERSION = '0.21';
 
 
 sub new 

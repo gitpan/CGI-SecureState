@@ -1,5 +1,10 @@
 Revision history for Perl extension CGI::SecureState.
 
+0.21  Wed Jan  10 2:48:30 2001
+	- fixed test.pl to work with newer versions of CGI.pm.
+          New versions of CGI.pm don't assume command line parameter 
+	  entry.
+
 0.2  Mon Jan  2 17:10:30 2001
 	- first public release.
 
