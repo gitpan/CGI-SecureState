@@ -1,6 +1,37 @@
 Revision history for Perl extension CGI::SecureState.
 
-0.30
+0.35
+	- README update to explain Perl 5.005_03 compatibility.
+	- POD update to explain "recent memory" and to note that
+	  the Anthill Bug Manager is now the official large example
+	  of how to use CGI::SecureState.
+	- Fixed some minor security concerns.  These were:
+	  a) not including the remote IP address in the encryption
+	  key, and b) only having around 80 bits of randomness in ID
+	  generation instead of over 160.
+	- Since fixing the security concerns changed the encryption
+	  key, the binary format has changed Yet Again.  However, it
+	  is now more compact and fixes problems with corner cases.
+	- Added the clean_statedir() function to ease the purging
+	  of old state files from directories.
+	- Added some internal convenience functions (args_to_hash(),
+	  stringify_recent_memory(), recover_recent_memory(),
+	  generate_random_id()).
+	- Added the memory_as() function to add recent memory to the
+	  state_* functions.
+	- Added user_param(), user_params(), and user_delete() for
+	  interaction with "recent memory".
+	- Added tests for "recent memory".
+	- Addition of the "recent memory" concept that lets user-
+	  specified parameters take precedence over parameters in
+	  the state file.
+	- Fixes for Perl 5.005_03.
+	- Made new() check for ID tag in url_param (suggestion from
+	  Hise Chapman (hise at nc.rr.com).
+
+---Old Releases-----------------------------------------------
+
+0.30  Sunday, June 23, 2002
 	- Updated the README to reflect changes.
 	- Updated the Makefile to spit out nasty warnings if 
 	  the user was upgrading from a version below 0.29.
@@ -35,15 +66,19 @@ Revision history for Perl extension CGI::SecureState.
 	- Rewrite of encipher() and decipher() to use reverse-CBC
 	  encryption instead of ECB encryption.
 
-0.26    - Quick and dirty bugfix ($test variable not declared)
 
-0.25	- Changed e-mail address
+0.26  Tuesday, May 29, 2001
+	- Quick and dirty bugfix ($test variable not declared)
+
+0.25  Monday, May 28, 2001	
+	- Changed e-mail address
 	- Fixed Makefile problems
 	- Added note about future versions of CGI::SecureState
 
-0.24    - Quick and dirty bugfix ($test variable not declared)
+0.24  Monday, March 26, 2001
+	- Quick and dirty bugfix ($test variable not declared)
 
-0.23  Thu Mar 22 20:47:40 2001
+0.23  Thursday, March 22, 2001
 	- Added Dave Stafford's binmode fix.  Hopefully, the code will
 	  now work on Win32.
 	- changed delete() to accept multiple arguments
@@ -59,7 +94,7 @@ Revision history for Perl extension CGI::SecureState.
 	  decryption and am satisfied that it works.
 
 
-0.22  Thu Jan 18 17:47:45 2001
+0.22  Thursday, January 18, 2001
 	- fixed test.pl spelling error (should be installed)->(should
 	  not be installed) and changed it to test the new
 	  capabilities of the encipher and decipher functions.
@@ -74,10 +109,10 @@ Revision history for Perl extension CGI::SecureState.
 	  works with CGI.pm v2.74.
 	- Changed test.pl to detect systems without case sensitivity.
 
-0.21  Wed Jan 10 14:48:30 2001
+0.21  Wednesday, January 10, 2001
 	- fixed test.pl to work with newer versions of CGI.pm.
           New versions (i.e. 2.74) of CGI.pm don't assume command line
 	  parameter entry.
 
-0.20  Mon Jan  2 17:10:30 2001
+0.20  Monday, January 2, 2001
 	- first public release.

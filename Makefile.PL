@@ -13,7 +13,7 @@ if ($we_are_upgrading) {
     print "* before installing this new version, as it will     *\n";
     print "* spit out nasty warnings if you use it on old       *\n";
     print "* scripts.  See                                      *\n";
-    print "* http://search.cpan.org/search?dist=CGI-SecureState *\n";
+    print "* http://search.cpan.org/search?dist=SecureState     *\n";
     print "* for more details.                                  *\n";
     print "******************************************************\n";
 
@@ -26,5 +26,7 @@ WriteMakefile(
     'NAME'		=> 'CGI::SecureState',
     'VERSION_FROM'	=> 'SecureState.pm',
     'PREREQ_PM'		=> {CGI => '2.0', Digest::SHA1 => '1.0', Crypt::Blowfish => '2.0',
-			    Fcntl => '0.1', File::Spec => '0.1'}
+			    Fcntl => '0.1', File::Spec => '0.1'},
+    'DISTNAME'          => 'CGI-SecureState',
+    'dist'              => { COMPRESS => 'gzip', SUFFIX => 'gz', },
 );

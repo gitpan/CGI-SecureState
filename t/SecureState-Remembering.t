@@ -1,3 +1,4 @@
+#!perl -w
 # Before `make install' is performed this script should be runnable with
 # `make test'. After `make install' it should work as `perl SecureState-Remembering.t'
 
@@ -17,7 +18,7 @@ print "ok $test\n";
 @ISA=qw (CGI);
 ######################### End of black magic.
 
-unless ( eval { require 5.6.0 } )
+unless ( eval { require 5.005_03 } )
 {
     warn "\nWow, you really insist on using an old version of PERL, don't you?\n";
     warn "If this is not a warning that you expected to see, read the README file\n";
@@ -26,6 +27,7 @@ unless ( eval { require 5.6.0 } )
 }
 
 $ENV{'REMOTE_ADDR'}='127.0.0.1';
+$ENV{'REQUEST_METHOD'}='GET';
 
 #test CGI->new
 $test++;

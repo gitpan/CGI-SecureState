@@ -1,3 +1,4 @@
+#!perl -w
 # Before `make install' is performed this script should be runnable with
 # `make test'. After `make install' it should work as `perl SecureState-Forgetful.t'
 
@@ -6,7 +7,7 @@
 # Change 1..1 below to 1..last_test_to_print .
 # (It may become useful if the test is moved to ./t subdirectory.)
 
-BEGIN { $| = 1; print "1..8\n"; }
+BEGIN { $| = 1; print "1..11\n"; }
 END {print "Load failed ... not ok 1\n" unless $loaded;}
 use CGI qw(-no_debug);
 use CGI::SecureState;
@@ -17,7 +18,7 @@ print "ok $test\n";
 @ISA=qw (CGI);
 ######################### End of black magic.
 
-unless ( eval { require 5.6.0 } )
+unless ( eval { require 5.005_03 } )
 {
     warn "\nWow, you really insist on using an old version of PERL, don't you?\n";
     warn "If this is not a warning that you expected to see, read the README file\n";
@@ -26,11 +27,39 @@ unless ( eval { require 5.6.0 } )
 }
 
 $ENV{'REMOTE_ADDR'}='127.0.0.1';
+$ENV{'REQUEST_METHOD'}='GET';
 
 #test CGI->new
 $test++;
-my $cgi=new CGI::SecureState(-stateDir => ".", -mindSet => 1);
+my $cgi=new CGI::SecureState(-stateDir => ".", -mindSet => 1, -temp => [qw(param1 param2)]);
 print "ok $test\n";
+
+#test CGI->user_param
+$test++;
+$cgi->param('.tmpparam1' => "Test of param 1");
+$cgi->param('.tmpparam2' => "Test".chr(2)." of param 2");
+$cgi->recover_memory;
+($param1, $param2) = $cgi->user_params('param1', 'param2');
+if ($param1 ne "Test of param 1" or $param2 ne "Test".chr(2)." of param 2") {
+    print "not ok $test\n";
+} else {
+    print "ok $test\n";
+}
+
+$test++;
+if ($cgi->param('param1') or $cgi->param('param2')) {
+    print "not ok $test\n";
+} else {
+    print "ok $test\n";
+}
+
+$test++;
+my $url = $cgi->memory_as('url');
+if ($url =~ /\.tmpparam1=Test/ and $url =~ /\.tmpparam2=Test\%02/) {
+    print "ok $test\n";
+} else {
+    print "not ok $test\n";
+}
 
 #test CGI->add
 $test++;
@@ -49,6 +78,7 @@ if ($param1[0] ne 'alpha' or $param1[1] ne 'beta' or $param2 ne 'gamma' or
 } else {
     print "ok $test\n";
 }
+
 
 #test CGI->delete
 $test++;

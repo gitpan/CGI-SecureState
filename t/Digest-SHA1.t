@@ -20,5 +20,9 @@ print "ok $test\n";
 $test++;
 my $words="Blah blah blah blah blah";
 my $binstring=$words;
-unless (&sha1($binstring) eq pack("H*",&sha1_hex($binstring))) { print "not ok $test\n" }
+unless (&sha1($binstring) eq pack("H*",&sha1_hex($binstring))) { &bail }
 else { print "ok $test\n" }
+
+sub bail {
+    print "Bail out! Digest::SHA1, a required module for CGI::SecureState, does not work on your system!\n";
+}
